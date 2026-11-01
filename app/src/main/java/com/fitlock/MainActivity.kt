@@ -3,7 +3,6 @@ package com.fitlock
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.lifecycleScope
 import androidx.compose.foundation.layout.Arrangement
@@ -21,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import com.fitlock.health.HealthConnectRepository
 import kotlinx.coroutines.launch
 import java.time.Duration
-import java.time.format.DateTimeFormatter
 
 class MainActivity : ComponentActivity() {
     private lateinit var healthConnect: HealthConnectRepository
@@ -61,7 +59,9 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                     onRefresh = {
-                        lifecycleScope.launch { loadTodaySessions() }
+                        if (::healthConnect.isInitialized) {
+                            lifecycleScope.launch { loadTodaySessions() }
+                        }
                     }
                 )
             }
@@ -77,8 +77,7 @@ class MainActivity : ComponentActivity() {
             val records = healthConnect.readTodaySessions()
             sessions = records.map { record ->
                 val minutes = Duration.between(record.startTime, record.endTime).toMinutes()
-                val type = record.exerciseType.toString()
-                "$type · $minutes min"
+                "${record.exerciseType} · $minutes min"
             }
             status = if (records.isEmpty()) {
                 "No exercise sessions recorded today."
